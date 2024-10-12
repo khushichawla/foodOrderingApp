@@ -8,7 +8,9 @@ import { supabase } from "./src/supabaseClient";
 import SignIn from "./src/components/SignIn";
 import SignUp from "./src/components/SignUp";
 import Menu from "./src/components/Menu";
-import { View, Text } from "react-native";
+import Checkout from "./src/components/Checkout";
+import Orders from "./src/components/Orders";
+import { TouchableOpacity, Text } from "react-native";
 
 const Stack = createNativeStackNavigator();
 
@@ -48,8 +50,22 @@ export default function App() {
           component={Menu}
           options={{
             headerLeft: () => false, // Hides the back button while keeping the header visible
-            title: 'Menu',
-          }} 
+            title: "Menu",
+          }}
+        />
+        <Stack.Screen
+          name="Checkout"
+          component={Checkout}
+          options={{
+            title: "Checkout",
+          }}
+        />
+        <Stack.Screen
+          name="Orders"
+          component={Orders}
+          options={{
+            title: "Your Orders",
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>
