@@ -114,16 +114,16 @@ const styles = StyleSheet.create({
   toggleButton: {
     padding: 10,
     borderWidth: 1,
-    borderColor: '#007BFF',
+    borderColor: '#287618',
     borderRadius: 5,
     flex: 1,
     alignItems: 'center',
   },
   activeToggle: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#287618',
   },
   toggleButtonText: {
-    color: '#007BFF',
+    color: '#287618',
     fontWeight: 'bold',
   },
   activeText: {
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     color: "green",
   },
   menuButton: {
-    backgroundColor: "#007BFF",
+    backgroundColor: "#287618",
     paddingVertical: 10,
     marginTop: 20,
     borderRadius: 5,

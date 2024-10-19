@@ -126,7 +126,7 @@ export default function Menu({ navigation }) {
       <View style={styles.header}>
         <Text style={styles.welcomeText}>Welcome, {user ? user.username : 'Guest'}</Text>
         <TouchableOpacity onPress={() => setDropdownVisible(!dropdownVisible)} style={styles.hamburgerButton}>
-          <Icon name="menu" size={30} color="#007BFF" />
+          <Icon name="menu" size={30} color="#287618" />
         </TouchableOpacity>
       </View>
 
@@ -287,10 +287,10 @@ const styles = StyleSheet.create({
   totalPrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#007BFF',
+    color: '#287618',
   },
   checkoutButton: {
-    backgroundColor: '#f44336',
+    backgroundColor: '#287618',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,

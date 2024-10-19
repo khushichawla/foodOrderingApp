@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { Alert, StyleSheet, View, Text } from 'react-native';
-import { supabase } from '../supabaseClient';
-import { Button, Input } from '@rneui/themed';
-import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../AuthContext'; // Import your Auth context
+import React, { useState } from "react";
+import { Alert, StyleSheet, View, Text, Image } from "react-native";
+import { supabase } from "../supabaseClient";
+import { Button, Input } from "@rneui/themed";
+import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "../AuthContext"; // Import your Auth context
 
 export default function SignIn() {
   const navigation = useNavigation();
   const { login } = useAuth(); // Access the login function from context
-  const [identifier, setIdentifier] = useState(''); // This can be email or phone
-  const [password, setPassword] = useState('');
+  const [identifier, setIdentifier] = useState(""); // This can be email or phone
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function signIn() {
@@ -17,39 +17,42 @@ export default function SignIn() {
 
     // Retrieve user profile based on email or phone number
     const { data: profile, error: profileError } = await supabase
-      .from('user_profile')
-      .select('*')
+      .from("user_profile")
+      .select("*")
       .or(`email.eq.${identifier},phone.eq.${identifier}`)
       .single();
 
     if (profileError || !profile) {
-      console.error('Error fetching profile:', profileError);
-      Alert.alert('Sign In Error', 'Invalid email or phone number.');
+      console.error("Error fetching profile:", profileError);
+      Alert.alert("Sign In Error", "Invalid email or phone number.");
       setLoading(false);
       return;
     }
 
     // Check if the password matches
     if (profile.password !== password) {
-      console.error('Invalid password');
-      Alert.alert('Sign In Error', 'Incorrect password.');
+      console.error("Invalid password");
+      Alert.alert("Sign In Error", "Incorrect password.");
       setLoading(false);
       return;
     }
 
     // Password is correct, check user status
-    if (profile.status === 'pending') {
-      Alert.alert('Login Successful', 'Your authorization from admin is pending. Please wait for it to be approved.');
-    } else if (profile.status === 'approved') {
+    if (profile.status === "pending") {
+      Alert.alert(
+        "Login Successful",
+        "Your authorization from admin is pending. Please wait for it to be approved."
+      );
+    } else if (profile.status === "approved") {
       // After successful sign-in, store user data in context
-      login({ 
+      login({
         user_id: profile.user_id,
         phone: profile.phone,
         email: profile.email,
-        username: profile.username
+        username: profile.username,
       });
 
-      navigation.navigate('Menu'); // Redirect to the menu
+      navigation.navigate("Menu"); // Redirect to the menu
     }
 
     setLoading(false);
@@ -57,6 +60,14 @@ export default function SignIn() {
 
   return (
     <View style={styles.container}>
+      {/* Logo Image */}
+      <Image
+        source={{
+          uri: "https://llsjhmarfuipnzgwkngm.supabase.co/storage/v1/object/public/foodImages/CKFood.png",
+        }}
+        style={styles.logo}
+        resizeMode="contain"
+      />
       <Input
         label="Email or Phone Number"
         onChangeText={setIdentifier}
@@ -71,13 +82,15 @@ export default function SignIn() {
         placeholder="********"
         secureTextEntry
       />
-      <Button title="Sign In" disabled={loading} onPress={signIn} />
+      <Button
+        title="Sign In"
+        disabled={loading}
+        onPress={signIn}
+        buttonStyle={styles.button}
+      />
       <View style={styles.footer}>
         <Text>New User? </Text>
-        <Text 
-          style={styles.link} 
-          onPress={() => navigation.navigate('SignUp')}
-        >
+        <Text style={styles.link} onPress={() => navigation.navigate("SignUp")}>
           Sign Up
         </Text>
       </View>
@@ -88,16 +101,27 @@ export default function SignIn() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 16,
+    backgroundColor: "white",
+  },
+  logo: {
+    width: 150, // Adjust width as needed
+    height: 150, // Adjust height as needed
+    alignSelf: "center", // Center the logo
+    marginBottom: 60, // Add space below the logo
+    marginTop: -80,
+  },
+  button: {
+    backgroundColor: "#287618",
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 20,
   },
   link: {
-    color: 'blue',
-    textDecorationLine: 'underline',
+    color: "blue",
+    textDecorationLine: "underline",
   },
 });

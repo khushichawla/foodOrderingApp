@@ -5,7 +5,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useState, useEffect } from "react";
 import { supabase } from "./src/supabaseClient";
-import { AuthProvider } from './src/AuthContext';
+import { AuthProvider } from "./src/AuthContext";
 import SignIn from "./src/components/SignIn";
 import SignUp from "./src/components/SignUp";
 import Menu from "./src/components/Menu";
@@ -43,34 +43,42 @@ export default function App() {
 
   return (
     <AuthProvider>
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="SignIn">
-        <Stack.Screen name="SignIn" component={SignIn} />
-        <Stack.Screen name="SignUp" component={SignUp} />
-        <Stack.Screen
-          name="Menu"
-          component={Menu}
-          options={{
-            headerLeft: () => false, // Hides the back button while keeping the header visible
-            title: "Menu",
-          }}
-        />
-        <Stack.Screen
-          name="Checkout"
-          component={Checkout}
-          options={{
-            title: "Checkout",
-          }}
-        />
-        <Stack.Screen
-          name="Orders"
-          component={Orders}
-          options={{
-            title: "Your Orders",
-          }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="SignIn">
+          <Stack.Screen
+            name="SignIn"
+            component={SignIn}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SignUp"
+            component={SignUp}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Menu"
+            component={Menu}
+            options={{
+              headerLeft: () => false, // Hides the back button while keeping the header visible
+              title: "Menu",
+            }}
+          />
+          <Stack.Screen
+            name="Checkout"
+            component={Checkout}
+            options={{
+              title: "Checkout",
+            }}
+          />
+          <Stack.Screen
+            name="Orders"
+            component={Orders}
+            options={{
+              title: "Your Orders",
+            }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
     </AuthProvider>
   );
 }

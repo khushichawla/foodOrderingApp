@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   paymentButton: {
-    backgroundColor: 'red',
+    backgroundColor: '#287618',
     paddingVertical: 10,
     marginTop: 10,
     borderRadius: 5,
