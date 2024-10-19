@@ -3,19 +3,21 @@ import { Alert, StyleSheet, View, Text } from 'react-native';
 import { supabase } from '../supabaseClient';
 import { Button, Input } from '@rneui/themed';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../AuthContext'; // Import your Auth context
 
 export default function SignIn() {
   const navigation = useNavigation();
+  const { login } = useAuth(); // Access the login function from context
   const [identifier, setIdentifier] = useState(''); // This can be email or phone
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function signIn() {
-    setLoading(true); // Set loading state
+    setLoading(true);
 
     // Retrieve user profile based on email or phone number
     const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
+      .from('user_profile')
       .select('*')
       .or(`email.eq.${identifier},phone.eq.${identifier}`)
       .single();
@@ -37,13 +39,20 @@ export default function SignIn() {
 
     // Password is correct, check user status
     if (profile.status === 'pending') {
-        // Can change pop up text here
       Alert.alert('Login Successful', 'Your authorization from admin is pending. Please wait for it to be approved.');
     } else if (profile.status === 'approved') {
-      navigation.navigate('Menu'); // Redirect to Menu screen
+      // After successful sign-in, store user data in context
+      login({ 
+        user_id: profile.user_id,
+        phone: profile.phone,
+        email: profile.email,
+        username: profile.username
+      });
+
+      navigation.navigate('Menu'); // Redirect to the menu
     }
 
-    setLoading(false); // Reset loading state
+    setLoading(false);
   }
 
   return (

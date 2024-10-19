@@ -15,11 +15,11 @@ export default function SignUp({ navigation }) {
     
     // Check if the email or phone number already exists
     const { data: existingUser, error: userError } = await supabase
-      .from('user_profiles')
+      .from('user_profile')
       .select('*')
       .or(`email.eq.${email},phone.eq.${phone}`)
       .single();
-
+  
     if (existingUser) {
       Alert.alert(
         'Sign Up Error', 
@@ -34,15 +34,21 @@ export default function SignUp({ navigation }) {
       setLoading(false); // Reset loading state
       return;
     }
-
-    // Insert additional user info into user_profiles table
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .insert([{ phone, email, username, password, status: 'pending' }]);
-
+  
+    // Insert additional user info into user_profile table
+    const {data, error: profileError } = await supabase
+      .from('user_profile') // Ensure the table name is correct
+      .insert([{
+        phone, 
+        email, 
+        username,
+        password,
+        status: 'pending' 
+      }]);
+  
     if (profileError) {
       console.error('Error saving profile:', profileError);
-      Alert.alert('Profile Error', profileError.message); // Handle the error appropriately
+      Alert.alert('Profile Error', profileError.message || 'An unknown error occurred.'); // Handle the error appropriately
     } else {
       console.log('User profile created successfully');
       Alert.alert(
@@ -56,7 +62,7 @@ export default function SignUp({ navigation }) {
         ]
       ); // Success message
     }
-
+  
     setLoading(false); // Reset loading state
   }
 

@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity } from 'react-native';
-import { supabase } from '../supabaseClient'; // Adjust the path as needed
+import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity, Alert } from 'react-native';
+import { supabase } from '../supabaseClient';
+import { useAuth } from '../AuthContext'; // Ensure this path is correct
+import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function Menu({ navigation }) {
+  const { user, logout } = useAuth(); // Use the user and logout function from context
   const [menuItems, setMenuItems] = useState([]);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [itemCounts, setItemCounts] = useState({});
+  const [dropdownVisible, setDropdownVisible] = useState(false);
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -18,6 +22,17 @@ export default function Menu({ navigation }) {
     };
     fetchMenuItems();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      logout(); // Call the logout function from context
+      Alert.alert("Logged out successfully");
+      navigation.navigate('SignIn'); // Navigate to login screen
+    } catch (error) {
+      console.error('Error during logout:', error);
+      Alert.alert("Logout error", "An error occurred while trying to log out.");
+    }
+  };
 
   const groupByCategory = (items) => {
     return items.reduce((acc, item) => {
@@ -65,6 +80,10 @@ export default function Menu({ navigation }) {
     navigation.navigate('Checkout', { itemCounts, menuItems });
   };
 
+  const handleOrders = () => {
+    navigation.navigate('Orders');
+  };
+
   const renderItem = ({ item }) => (
     <View style={styles.cardContainer}>
       <Image source={{ uri: item.image }} style={styles.image} />
@@ -104,11 +123,31 @@ export default function Menu({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.welcomeText}>Welcome, {user ? user.username : 'Guest'}</Text>
+        <TouchableOpacity onPress={() => setDropdownVisible(!dropdownVisible)} style={styles.hamburgerButton}>
+          <Icon name="menu" size={30} color="#007BFF" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Mini Dropdown for Menu Options */}
+      {dropdownVisible && (
+        <View style={styles.dropdownMenu}>
+          <TouchableOpacity style={styles.dropdownItem} onPress={handleOrders}>
+            <Text style={styles.dropdownItemText}>Go to Orders</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
+            <Text style={styles.dropdownItemText}>Log Out</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <FlatList
         data={Object.keys(groupedMenuItems)}
         renderItem={renderCategory}
         keyExtractor={category => category}
       />
+      
       <View style={styles.checkoutContainer}>
         <View style={styles.totalContainer}>
           <Text style={styles.totalCount}>Total Items: {getTotalCount()}</Text>
@@ -118,9 +157,6 @@ export default function Menu({ navigation }) {
           <Text style={styles.checkoutButtonText}>Checkout</Text>
         </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.logoutButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.logoutButtonText}>Log Out</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -130,9 +166,39 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  title: {
-    fontSize: 24,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 20,
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  hamburgerButton: {
+    padding: 10,
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 50,
+    right: 10,
+    backgroundColor: 'white',
+    borderRadius: 5,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    padding: 10,
+    width: 150,
+    zIndex: 1000,
+  },
+  dropdownItem: {
+    paddingVertical: 10,
+  },
+  dropdownItemText: {
+    fontSize: 16,
     textAlign: 'center',
   },
   categoryContainer: {
@@ -205,14 +271,14 @@ const styles = StyleSheet.create({
   checkoutContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start', // Align items to the start
+    alignItems: 'flex-start',
     marginTop: 20,
     padding: 10,
     borderTopWidth: 1,
     borderTopColor: '#ccc',
   },
   totalContainer: {
-    flex: 1, // Allow totalContainer to take remaining space
+    flex: 1,
   },
   totalCount: {
     fontSize: 18,
@@ -232,15 +298,6 @@ const styles = StyleSheet.create({
   checkoutButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
-  },
-  logoutButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-  },
-  logoutButtonText: {
-    color: '#FF0000',
     fontWeight: 'bold',
   },
 });

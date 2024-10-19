@@ -5,6 +5,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useState, useEffect } from "react";
 import { supabase } from "./src/supabaseClient";
+import { AuthProvider } from './src/AuthContext';
 import SignIn from "./src/components/SignIn";
 import SignUp from "./src/components/SignUp";
 import Menu from "./src/components/Menu";
@@ -38,9 +39,10 @@ export default function App() {
     };
   }, []);
 
-  console.log("Session data:", session); // Log session data for debugging
+  // console.log("Session data:", session); // Log session data for debugging
 
   return (
+    <AuthProvider>
     <NavigationContainer>
       <Stack.Navigator initialRouteName="SignIn">
         <Stack.Screen name="SignIn" component={SignIn} />
@@ -69,5 +71,6 @@ export default function App() {
         />
       </Stack.Navigator>
     </NavigationContainer>
+    </AuthProvider>
   );
 }
