@@ -11,6 +11,7 @@ import SignUp from "./src/components/SignUp";
 import Menu from "./src/components/Menu";
 import Checkout from "./src/components/Checkout";
 import Orders from "./src/components/Orders";
+import AdminDashboard from "./src/components/AdminDashboard";
 import { TouchableOpacity, Text } from "react-native";
 
 const Stack = createNativeStackNavigator();
@@ -59,7 +60,7 @@ export default function App() {
             name="Menu"
             component={Menu}
             options={{
-              headerLeft: () => false, // Hides the back button while keeping the header visible
+              headerLeft: () => false,
               title: "Menu",
             }}
           />
@@ -76,6 +77,11 @@ export default function App() {
             options={{
               title: "Your Orders",
             }}
+          />
+          <Stack.Screen
+            name="AdminDashboard"
+            component={AdminDashboard}
+            options={{ headerShown: false }}
           />
         </Stack.Navigator>
       </NavigationContainer>

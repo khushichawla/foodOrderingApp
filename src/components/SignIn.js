@@ -1,49 +1,57 @@
 import React, { useState } from "react";
-import { Alert, StyleSheet, View, Text, Image } from "react-native";
+import { Alert, StyleSheet, View, Text, Image, KeyboardAvoidingView, Platform } from "react-native";
 import { supabase } from "../supabaseClient";
 import { Button, Input } from "@rneui/themed";
 import { useNavigation } from "@react-navigation/native";
-import { useAuth } from "../AuthContext"; // Import your Auth context
+import { useAuth } from "../AuthContext";
 
 export default function SignIn() {
   const navigation = useNavigation();
-  const { login } = useAuth(); // Access the login function from context
-  const [identifier, setIdentifier] = useState(""); // This can be email or phone
+  const { login } = useAuth();
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function signIn() {
     setLoading(true);
-
+  
     // Retrieve user profile based on email or phone number
     const { data: profile, error: profileError } = await supabase
       .from("user_profile")
       .select("*")
       .or(`email.eq.${identifier},phone.eq.${identifier}`)
       .single();
-
-    if (profileError || !profile) {
-      console.error("Error fetching profile:", profileError);
-      Alert.alert("Sign In Error", "Invalid email or phone number.");
+  
+    if (profileError) {
+      // console.error("Error fetching profile:", profileError);
+      Alert.alert("Sign In Error", "Incorrect email/phone or password. Try again.");
       setLoading(false);
       return;
     }
-
+  
+    if (!profile) {
+      console.error("Profile not found");
+      Alert.alert("Sign In Error", "New User? Sign Up");
+      navigation.navigate("SignUp");
+      setLoading(false);
+      return;
+    }
+  
     // Check if the password matches
     if (profile.password !== password) {
       console.error("Invalid password");
-      Alert.alert("Sign In Error", "Incorrect password.");
+      Alert.alert("Sign In Error", "Incorrect email/phone or password. Try again.");
       setLoading(false);
       return;
     }
-
-    // Password is correct, check user status
-    if (profile.status === "pending") {
+  
+    // Check user status
+    if (profile.status === "Pending") {
       Alert.alert(
-        "Login Successful",
-        "Your authorization from admin is pending. Please wait for it to be approved."
+        "Authorization Pending",
+        "Please wait for your account to be approved."
       );
-    } else if (profile.status === "approved") {
+    } else if (profile.status === "Approved") {
       // After successful sign-in, store user data in context
       login({
         user_id: profile.user_id,
@@ -51,16 +59,29 @@ export default function SignIn() {
         email: profile.email,
         username: profile.username,
       });
-
+  
       navigation.navigate("Menu"); // Redirect to the menu
+    } else if (profile.status === "Admin") {
+      // After successful sign-in, store user data in context
+      login({
+        user_id: profile.user_id,
+        phone: profile.phone,
+        email: profile.email,
+        username: profile.username,
+      });
+  
+      navigation.navigate("AdminDashboard"); // Redirect to the admin dashboard
     }
-
+  
     setLoading(false);
   }
 
   return (
-    <View style={styles.container}>
-      {/* Logo Image */}
+    <KeyboardAvoidingView
+    style={styles.container}
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+  >
+      {/* Your existing content */}
       <Image
         source={{
           uri: "https://llsjhmarfuipnzgwkngm.supabase.co/storage/v1/object/public/foodImages/CKFood.png",
@@ -94,7 +115,7 @@ export default function SignIn() {
           Sign Up
         </Text>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

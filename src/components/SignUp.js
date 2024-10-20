@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Alert, StyleSheet, View, Text, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Alert, StyleSheet, View, Text, Image, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
 import { supabase } from "../supabaseClient";
 import { Button, Input } from "@rneui/themed";
 
@@ -9,9 +9,11 @@ export default function SignUp({ navigation }) {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailInputStyle, setEmailInputStyle] = useState(styles.input);
+  const [passwordInputStyle, setPasswordInputStyle] = useState(styles.input);
 
   async function signUp() {
-    setLoading(true); // Set loading state
+    setLoading(true);
 
     // Check if the email or phone number already exists
     const { data: existingUser, error: userError } = await supabase
@@ -24,48 +26,62 @@ export default function SignUp({ navigation }) {
       Alert.alert("Sign Up Error", "Already signed up. Please log in.", [
         {
           text: "OK",
-          onPress: () => navigation.navigate("SignIn"), // Redirect to Sign In
+          onPress: () => navigation.navigate("SignIn"),
         },
-      ]); // Show error alert
-      setLoading(false); // Reset loading state
+      ]);
+      setLoading(false);
       return;
     }
 
     // Insert additional user info into user_profile table
     const { data, error: profileError } = await supabase
-      .from("user_profile") // Ensure the table name is correct
+      .from("user_profile")
       .insert([
         {
           phone,
           email,
           username,
           password,
-          status: "pending",
+          status: "Pending",
         },
       ]);
 
     if (profileError) {
       console.error("Error saving profile:", profileError);
-      Alert.alert(
-        "Profile Error",
-        profileError.message || "An unknown error occurred."
-      ); // Handle the error appropriately
+      Alert.alert("Profile Error", profileError.message || "An unknown error occurred.");
     } else {
-      console.log("User profile created successfully");
       Alert.alert("Success", "Your account has been created successfully!", [
         {
           text: "OK",
-          onPress: () => navigation.navigate("SignIn"), // Redirect to Sign In
+          onPress: () => navigation.navigate("SignIn"),
         },
-      ]); // Success message
+      ]);
     }
 
-    setLoading(false); // Reset loading state
+    setLoading(false);
   }
 
+  const handleEmailInputFocus = () => {
+    setEmailInputStyle([styles.input, styles.inputFocused]);
+  };
+
+  const handleEmailInputBlur = () => {
+    setEmailInputStyle(styles.input);
+  };
+
+  const handlePasswordInputFocus = () => {
+    setPasswordInputStyle([styles.input, styles.inputFocused]);
+  };
+
+  const handlePasswordInputBlur = () => {
+    setPasswordInputStyle(styles.input);
+  };
+
   return (
-    <View style={styles.container}>
-      {/* Logo Image */}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
       <Image
         source={{
           uri: "https://llsjhmarfuipnzgwkngm.supabase.co/storage/v1/object/public/foodImages/CKFood.png",
@@ -83,7 +99,7 @@ export default function SignUp({ navigation }) {
         label="Phone Number"
         onChangeText={setPhone}
         value={phone}
-        placeholder="+85212345678" // Example format
+        placeholder="12345678"
         keyboardType="phone-pad"
         autoCapitalize="none"
         maxLength={8}
@@ -95,6 +111,9 @@ export default function SignUp({ navigation }) {
         placeholder="example@mail.com"
         keyboardType="email-address"
         autoCapitalize="none"
+        onFocus={handleEmailInputFocus}
+        onBlur={handleEmailInputBlur}
+        inputStyle={emailInputStyle}
       />
       <Input
         label="Password"
@@ -102,6 +121,9 @@ export default function SignUp({ navigation }) {
         value={password}
         placeholder="********"
         secureTextEntry
+        onFocus={handlePasswordInputFocus}
+        onBlur={handlePasswordInputBlur}
+        inputStyle={passwordInputStyle}
       />
       <Button
         title="Sign Up"
@@ -115,7 +137,7 @@ export default function SignUp({ navigation }) {
           Sign In
         </Text>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -127,11 +149,10 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   logo: {
-    width: 150, // Adjust width as needed
-    height: 150, // Adjust height as needed
-    alignSelf: "center", // Center the logo
-    marginBottom: 60, // Add space below the logo
-    // marginTop: -80,
+    width: 150,
+    height: 150,
+    alignSelf: "center",
+    marginBottom: 60,
   },
   button: {
     backgroundColor: "#287618",
@@ -144,5 +165,11 @@ const styles = StyleSheet.create({
   link: {
     color: "blue",
     textDecorationLine: "underline",
+  },
+  input: {
+    paddingVertical: 10,
+  },
+  inputFocused: {
+    paddingVertical: 15,
   },
 });

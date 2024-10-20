@@ -1,8 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity, Alert } from 'react-native';
-import { supabase } from '../supabaseClient';
-import { useAuth } from '../AuthContext'; // Ensure this path is correct
-import Icon from 'react-native-vector-icons/Ionicons';
+import React, { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import { supabase } from "../supabaseClient";
+import { useAuth } from "../AuthContext"; // Ensure this path is correct
+import Icon from "react-native-vector-icons/Ionicons";
 
 export default function Menu({ navigation }) {
   const { user, logout } = useAuth(); // Use the user and logout function from context
@@ -13,9 +21,9 @@ export default function Menu({ navigation }) {
 
   useEffect(() => {
     const fetchMenuItems = async () => {
-      const { data, error } = await supabase.from('menu_items').select('*');
+      const { data, error } = await supabase.from("menu_items").select("*");
       if (error) {
-        console.error('Error fetching menu items:', error);
+        console.error("Error fetching menu items:", error);
       } else {
         setMenuItems(data);
       }
@@ -27,18 +35,28 @@ export default function Menu({ navigation }) {
     try {
       logout(); // Call the logout function from context
       Alert.alert("Logged out successfully");
-      navigation.navigate('SignIn'); // Navigate to login screen
+      navigation.navigate("SignIn"); // Navigate to login screen
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error("Error during logout:", error);
       Alert.alert("Logout error", "An error occurred while trying to log out.");
     }
   };
 
   const groupByCategory = (items) => {
-    return items.reduce((acc, item) => {
-      (acc[item.category] = acc[item.category] || []).push(item);
-      return acc;
-    }, {});
+    const singleItemCategories = {};
+    const multiItemCategories = {};
+
+    items.forEach((item) => {
+      if (items.filter((i) => i.category === item.category).length === 1) {
+        (singleItemCategories[item.category] =
+          singleItemCategories[item.category] || []).push(item);
+      } else {
+        (multiItemCategories[item.category] =
+          multiItemCategories[item.category] || []).push(item);
+      }
+    });
+
+    return { singleItemCategories, multiItemCategories };
   };
 
   const groupedMenuItems = groupByCategory(menuItems);
@@ -69,63 +87,119 @@ export default function Menu({ navigation }) {
   };
 
   const getTotalPrice = () => {
-    return Object.keys(itemCounts).reduce((total, itemId) => {
-      const count = itemCounts[itemId] || 0;
-      const item = menuItems.find(menuItem => menuItem.id === itemId);
-      return total + (item ? item.price * count : 0);
-    }, 0).toFixed(2);
+    return Object.keys(itemCounts)
+      .reduce((total, itemId) => {
+        const count = itemCounts[itemId] || 0;
+        const item = menuItems.find((menuItem) => menuItem.id === itemId);
+        return total + (item ? item.price * count : 0);
+      }, 0)
+      .toFixed(2);
   };
 
   const handleCheckout = () => {
-    navigation.navigate('Checkout', { itemCounts, menuItems });
+    navigation.navigate("Checkout", { itemCounts, menuItems });
   };
 
   const handleOrders = () => {
-    navigation.navigate('Orders');
+    navigation.navigate("Orders");
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.cardContainer}>
-      <Image source={{ uri: item.image }} style={styles.image} />
-      <View style={styles.infoContainer}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+  const renderItem = ({ item }) => {
+    const isSoldOut = item.quantity === 0; // Check if the item is sold out
+  
+    return (
+      <View style={[styles.cardContainer, isSoldOut && styles.soldOut]}>
+        <Image source={{ uri: item.image }} style={styles.image} />
+        {isSoldOut && <View style={styles.overlay} />}
+        <View style={styles.infoContainer}>
+          <Text style={[styles.itemName, isSoldOut && styles.soldOutText]}>{item.name}</Text>
+          <Text style={[styles.itemPrice, isSoldOut && styles.soldOutText]}>
+            {isSoldOut ? "Sold Out" : `$${item.price.toFixed(2)}`}
+          </Text>
+        </View>
+        {!isSoldOut && (
+          <View style={styles.counterContainer}>
+            <TouchableOpacity onPress={() => handleDecrement(item.id)} style={styles.counterButton}>
+              <Text style={styles.counterButtonText}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.counterText}>{itemCounts[item.id] || 0}</Text>
+            <TouchableOpacity onPress={() => handleIncrement(item.id)} style={styles.counterButton}>
+              <Text style={styles.counterButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
-      <View style={styles.counterContainer}>
-        <TouchableOpacity onPress={() => handleDecrement(item.id)} style={styles.counterButton}>
-          <Text style={styles.counterButtonText}>-</Text>
-        </TouchableOpacity>
-        <Text style={styles.counterText}>{itemCounts[item.id] || 0}</Text>
-        <TouchableOpacity onPress={() => handleIncrement(item.id)} style={styles.counterButton}>
-          <Text style={styles.counterButtonText}>+</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
-  const renderCategory = ({ item }) => (
-    <View style={styles.categoryContainer}>
-      <TouchableOpacity onPress={() => toggleCategory(item)} style={styles.categoryHeader}>
-        <Text style={styles.categoryTitle}>{item}</Text>
-        <Text style={styles.arrow}>
-          {expandedCategories[item] ? ' ▲' : ' ▼'}
-        </Text>
-      </TouchableOpacity>
-      {expandedCategories[item] && (
-        <FlatList
-          data={groupedMenuItems[item]}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-        />
-      )}
-    </View>
-  );
+  const renderCategory = ({ item }) => {
+    if (groupedMenuItems.singleItemCategories[item]) {
+      return (
+        <View style={styles.singleItemContainer}>
+          {groupedMenuItems.singleItemCategories[item].map((menuItem) => (
+            <View style={styles.cardContainer} key={menuItem.id}>
+              <Image source={{ uri: menuItem.image }} style={styles.image} />
+              <View style={styles.infoContainer}>
+                <Text style={styles.itemName}>{menuItem.name}</Text>
+                <Text style={styles.itemPrice}>
+                  ${menuItem.price.toFixed(2)}
+                </Text>
+              </View>
+              <View style={styles.counterContainer}>
+                <TouchableOpacity
+                  onPress={() => handleDecrement(menuItem.id)}
+                  style={styles.counterButton}
+                >
+                  <Text style={styles.counterButtonText}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.counterText}>
+                  {itemCounts[menuItem.id] || 0}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => handleIncrement(menuItem.id)}
+                  style={styles.counterButton}
+                >
+                  <Text style={styles.counterButtonText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </View>
+      );
+    } else {
+      return (
+        <View style={styles.categoryContainer}>
+          <TouchableOpacity
+            onPress={() => toggleCategory(item)}
+            style={styles.categoryHeader}
+          >
+            <Text style={styles.categoryTitle}>{item}</Text>
+            <Text style={styles.arrow}>
+              {expandedCategories[item] ? " ▲" : " ▼"}
+            </Text>
+          </TouchableOpacity>
+          {expandedCategories[item] && (
+            <FlatList
+              data={groupedMenuItems.multiItemCategories[item]}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id}
+            />
+          )}
+        </View>
+      );
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.welcomeText}>Welcome, {user ? user.username : 'Guest'}</Text>
-        <TouchableOpacity onPress={() => setDropdownVisible(!dropdownVisible)} style={styles.hamburgerButton}>
+        <Text style={styles.welcomeText}>
+          Welcome, {user ? user.username : "Guest"}
+        </Text>
+        <TouchableOpacity
+          onPress={() => setDropdownVisible(!dropdownVisible)}
+          style={styles.hamburgerButton}
+        >
           <Icon name="menu" size={30} color="#287618" />
         </TouchableOpacity>
       </View>
@@ -137,23 +211,31 @@ export default function Menu({ navigation }) {
             <Text style={styles.dropdownItemText}>Go to Orders</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
-            <Text style={styles.dropdownItemText}>Log Out</Text>
+            <Text style={[styles.dropdownItemText, styles.logoutText]}>
+              Log Out
+            </Text>
           </TouchableOpacity>
         </View>
       )}
 
       <FlatList
-        data={Object.keys(groupedMenuItems)}
+        data={[
+          ...Object.keys(groupedMenuItems.singleItemCategories),
+          ...Object.keys(groupedMenuItems.multiItemCategories),
+        ]}
         renderItem={renderCategory}
-        keyExtractor={category => category}
+        keyExtractor={(category) => category}
       />
-      
+
       <View style={styles.checkoutContainer}>
         <View style={styles.totalContainer}>
           <Text style={styles.totalCount}>Total Items: {getTotalCount()}</Text>
           <Text style={styles.totalPrice}>Total Price: ${getTotalPrice()}</Text>
         </View>
-        <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
+        <TouchableOpacity
+          style={styles.checkoutButton}
+          onPress={handleCheckout}
+        >
           <Text style={styles.checkoutButtonText}>Checkout</Text>
         </TouchableOpacity>
       </View>
@@ -167,26 +249,26 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
   welcomeText: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   hamburgerButton: {
     padding: 10,
   },
   dropdownMenu: {
-    position: 'absolute',
+    position: "absolute",
     top: 50,
     right: 10,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 5,
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
@@ -199,36 +281,39 @@ const styles = StyleSheet.create({
   },
   dropdownItemText: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
+  },
+  logoutText: {
+    color: "red", // Set the text color to red
   },
   categoryContainer: {
     marginBottom: 20,
   },
   categoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 15,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: "#f8f8f8",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
   },
   categoryTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   arrow: {
     fontSize: 18,
   },
   cardContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 8,
   },
   image: {
@@ -242,20 +327,36 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   itemPrice: {
     fontSize: 18,
-    color: '#333',
+    color: "#333",
+  },
+  soldOut: {
+    backgroundColor: '#f0f0f0', // Light grey background for sold out items
+  },
+  soldOutText: {
+    color: '#888', // Grey text color for sold out items
+    // textDecorationLine: 'line-through', // Strikethrough for sold out items
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)', // Dark overlay with 50% opacity
+    borderRadius: 8, // Match border radius of the card
   },
   counterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginLeft: 10,
   },
   counterButton: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 5,
     padding: 5,
     marginHorizontal: 5,
@@ -266,38 +367,38 @@ const styles = StyleSheet.create({
   counterText: {
     fontSize: 18,
     width: 30,
-    textAlign: 'center',
+    textAlign: "center",
   },
   checkoutContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginTop: 20,
     padding: 10,
     borderTopWidth: 1,
-    borderTopColor: '#ccc',
+    borderTopColor: "#ccc",
   },
   totalContainer: {
     flex: 1,
   },
   totalCount: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   totalPrice: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#287618',
+    fontWeight: "bold",
+    color: "#287618",
   },
   checkoutButton: {
-    backgroundColor: '#287618',
+    backgroundColor: "#287618",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
   },
   checkoutButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
