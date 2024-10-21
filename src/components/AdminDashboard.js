@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Animated,
 } from "react-native";
 import { Input, Button } from "@rneui/themed";
 import { supabase } from "../supabaseClient";
@@ -17,11 +18,12 @@ import { useAuth } from "../AuthContext";
 import { useNavigation } from "@react-navigation/native";
 
 export default function AdminDashboard() {
-  const { user, logout: contextLogout } = useAuth(); // Get user from auth context
+  const { user, logout: contextLogout } = useAuth();
   const navigation = useNavigation();
   const [menuItems, setMenuItems] = useState([]);
   const [updatedQuantities, setUpdatedQuantities] = useState({});
-  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [sideNavVisible, setSideNavVisible] = useState(false);
+  const slideAnim = useState(new Animated.Value(-250))[0]; // Start off-screen to the left
 
   useEffect(() => {
     fetchMenuItems();
@@ -34,13 +36,6 @@ export default function AdminDashboard() {
     } else {
       setMenuItems(data);
     }
-  }
-
-  async function updateMenuItemQuantity(itemId, newQuantity) {
-    setUpdatedQuantities((prevQuantities) => ({
-      ...prevQuantities,
-      [itemId]: newQuantity,
-    }));
   }
 
   async function saveChanges() {
@@ -72,11 +67,19 @@ export default function AdminDashboard() {
   }
 
   const handleLogout = async () => {
-    await contextLogout(); // Call logout function from context
-    navigation.navigate("SignIn"); // Navigate to SignIn page
+    await contextLogout();
+    navigation.navigate("SignIn");
   };
 
-  // Group items by category
+  const toggleSideNav = () => {
+    setSideNavVisible((prev) => !prev);
+    Animated.timing(slideAnim, {
+      toValue: sideNavVisible ? -250 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const groupedMenuItems = menuItems.reduce((acc, item) => {
     acc[item.category] = acc[item.category] || [];
     acc[item.category].push(item);
@@ -90,45 +93,43 @@ export default function AdminDashboard() {
     >
       <View style={styles.container}>
         <View style={styles.header}>
+          <TouchableOpacity onPress={toggleSideNav} style={styles.hamburger}>
+            <Ionicons name="menu" size={30} color="#287618" />
+          </TouchableOpacity>
           <Text style={styles.greeting}>
             Hello, {user?.username || "Guest"}
           </Text>
-          <TouchableOpacity
-            onPress={() => setDropdownVisible(!dropdownVisible)}
-            style={styles.hamburger}
-          >
-            <Ionicons name="menu" size={30} color="#287618" />
-          </TouchableOpacity>
         </View>
 
-        {dropdownVisible && (
-          <View
-            style={styles.overlay}
-            onTouchEnd={() => setDropdownVisible(false)}
-          />
-        )}
-
-        {dropdownVisible && (
-          <View style={styles.dropdown}>
+        <Animated.View style={[styles.sideNav, { transform: [{ translateX: slideAnim }] }]}>
+          <View style={styles.sideNavContent}>
+          <Pressable onPress={() => navigation.navigate("AdminMenu")}>
+              <Text style={styles.dropdownItem}>Menu</Text>
+            </Pressable>
+            <View style={styles.separator} />
             <Pressable onPress={() => console.log("Add Item")}>
               <Text style={styles.dropdownItem}>Add Item</Text>
             </Pressable>
+            <View style={styles.separator} />
             <Pressable onPress={() => console.log("Customers")}>
               <Text style={styles.dropdownItem}>Customers</Text>
             </Pressable>
+            <View style={styles.separator} />
             <Pressable onPress={() => console.log("Orders")}>
               <Text style={styles.dropdownItem}>Orders</Text>
             </Pressable>
+            <View style={styles.separator} />
             <Pressable onPress={handleLogout}>
               <Text style={styles.dropdownItem}>Logout</Text>
             </Pressable>
-            <Pressable onPress={() => setDropdownVisible(false)}>
-              <Text style={[styles.dropdownItem, styles.closeButton]}>
-                Close
-              </Text>
+            <View style={styles.separator} />
+            <Pressable onPress={toggleSideNav}>
+              <Text style={[styles.dropdownItem, styles.closeButton]}>Close</Text>
             </Pressable>
           </View>
-        )}
+        </Animated.View>
+
+        {sideNavVisible && <View style={styles.overlay} />}
 
         <ScrollView style={styles.scrollView}>
           {Object.entries(groupedMenuItems).map(([category, items]) => (
@@ -162,13 +163,7 @@ export default function AdminDashboard() {
                         item.quantity.toString()
                       }
                       onChangeText={(text) => {
-                        // Allow -1, any integer value, or empty string
-                        if (
-                          text === "" ||
-                          text === "-1" ||
-                          /^[+-]?\d*$/.test(text)
-                        ) {
-                          // Update local value without affecting the global state
+                        if (text === "" || text === "-1" || /^[+-]?\d*$/.test(text)) {
                           setUpdatedQuantities((prev) => ({
                             ...prev,
                             [item.id]: text,
@@ -176,15 +171,14 @@ export default function AdminDashboard() {
                         }
                       }}
                       keyboardType="default"
-                      containerStyle={{ width: 90 }} // Set the container width here
+                      containerStyle={{ width: 90 }}
                       inputStyle={{
-                        // height: 10,
                         fontSize: 16,
                         textAlign: "center",
                         borderWidth: 1,
                         borderColor: "#ccc",
                         borderRadius: 4,
-                      }} // Set the height and font size here
+                      }}
                     />
                   </View>
                 </View>
@@ -206,10 +200,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
+    fontFamily: "Trebuchet MS", // Change to your desired font
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
     backgroundColor: "#f8f8f8",
@@ -220,12 +214,46 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#287618",
+    marginLeft: 16,
+    fontFamily: "Trebuchet MS", // Change to your desired font
   },
   hamburger: {
     padding: 8,
     backgroundColor: "white",
     borderRadius: 50,
     elevation: 3,
+  },
+  sideNav: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    backgroundColor: "white",
+    borderRightWidth: 1,
+    borderRightColor: "#ccc",
+    width: 250,
+    height: "100%",
+    padding: 20,
+    elevation: 5,
+    zIndex: 10,
+  },
+  sideNavContent: {
+    marginTop: 40, // Added margin to move options down
+  },
+  dropdownItem: {
+    padding: 12,
+    fontSize: 20,
+    color: "#287618",
+    fontWeight: "bold",
+    textAlign: "left",
+    fontFamily: "Trebuchet MS", // Change to your desired font
+  },
+  closeButton: {
+    color: "red",
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#ccc",
+    marginVertical: 8,
   },
   overlay: {
     position: "absolute",
@@ -236,45 +264,25 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     zIndex: 5,
   },
-  dropdown: {
-    position: "absolute",
-    right: 16,
-    top: 60,
-    backgroundColor: "white",
-    borderRadius: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 10,
-    zIndex: 10,
-    width: 150,
-  },
-  dropdownItem: {
-    padding: 10,
-    fontSize: 16,
-    color: "#287618",
-  },
-  closeButton: {
-    color: "red",
-  },
   scrollView: {
     padding: 16,
   },
   categoryContainer: {
-    marginBottom: 8, // Reduced margin
+    marginBottom: 15,
   },
   categoryHeader: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 4, // Reduced margin
+    marginBottom: 10,
     color: "#287618",
     textDecorationLine: "underline",
     paddingLeft: 10,
+    fontFamily: "Trebuchet MS", // Change to your desired font
   },
   headerContainer: {
     flexDirection: "row",
-    marginBottom: 4, // Reduced margin
-    paddingVertical: 4, // Reduced padding
+    marginBottom: 4,
+    paddingVertical: 4,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
   },
@@ -287,17 +295,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
+    fontFamily: "Trebuchet MS", // Change to your desired font
   },
   headerTextQuantity: {
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
     marginLeft: 20,
+    fontFamily: "Trebuchet MS", // Change to your desired font
   },
   itemContainer: {
     flexDirection: "row",
-    marginVertical: 2, // Reduced margin
-    paddingVertical: 4, // Reduced padding
+    marginVertical: 2,
+    paddingVertical: 4,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
   },
@@ -305,10 +315,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "left",
     width: "100%",
+    fontFamily: "Trebuchet MS",
   },
   quantityInput: {
     width: 40,
-    height: 20, // Reduced height
+    height: 20,
     textAlign: "center",
     borderWidth: 1,
     borderColor: "#ccc",

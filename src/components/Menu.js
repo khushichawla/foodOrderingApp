@@ -19,31 +19,33 @@ export default function Menu({ navigation, route }) {
   const { user, logout } = useAuth();
   const [menuItems, setMenuItems] = useState([]);
   const [expandedCategories, setExpandedCategories] = useState({});
-  // const [itemCounts, setItemCounts] = useState({});
   const { itemCounts, setItemCounts } = useCart();
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
+  // Fetch menu items when the screen is focused
   useFocusEffect(
     React.useCallback(() => {
+      const fetchMenuItems = async () => {
+        const { data, error } = await supabase
+          .from("menu_items")
+          .select("*")
+          .eq("status", "enable"); // Filter for items with status 'enable'
+  
+        if (error) {
+          console.error("Error fetching menu items:", error);
+        } else {
+          setMenuItems(data);
+        }
+      };
+
+      fetchMenuItems();
+
       // Check if resetSelections parameter is passed
       if (route.params?.resetSelections) {
         setItemCounts({}); // Reset item counts
       }
     }, [route.params])
   );
-
-  useEffect(() => {
-    const fetchMenuItems = async () => {
-      const { data, error } = await supabase.from("menu_items").select("*");
-      if (error) {
-        console.error("Error fetching menu items:", error);
-      } else {
-        setMenuItems(data);
-      }
-    };
-    fetchMenuItems();
-  }, []);
-
 
   const handleLogout = async () => {
     try {
@@ -310,7 +312,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   logoutText: {
-    color: "red", // Set the text color to red
+    color: "red",
   },
   categoryContainer: {
     marginBottom: 20,
@@ -360,10 +362,10 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   soldOut: {
-    backgroundColor: "#f0f0f0", // Light grey background for sold out items
+    backgroundColor: "#f0f0f0",
   },
   soldOutText: {
-    color: "#888", // Grey text color for sold out items
+    color: "#888",
   },
   overlay: {
     position: "absolute",
@@ -371,8 +373,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.05)", // Dark overlay with 50% opacity
-    borderRadius: 8, // Match border radius of the card
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
+    borderRadius: 8,
   },
   counterContainer: {
     flexDirection: "row",

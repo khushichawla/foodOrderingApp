@@ -13,6 +13,7 @@ import Menu from "./src/components/Menu";
 import Checkout from "./src/components/Checkout";
 import Orders from "./src/components/Orders";
 import AdminDashboard from "./src/components/AdminDashboard";
+import AdminMenu from "./src/components/AdminMenu";
 import { TouchableOpacity, Text } from "react-native";
 
 const Stack = createNativeStackNavigator();
@@ -84,6 +85,14 @@ export default function App() {
             name="AdminDashboard"
             component={AdminDashboard}
             options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="AdminMenu"
+            component={AdminMenu}
+            options={{
+              title: "Menu",
+            }}
+            // options={{ headerShown: false }}
           />
         </Stack.Navigator>
       </NavigationContainer>
