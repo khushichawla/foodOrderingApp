@@ -9,15 +9,23 @@ import {
   Alert,
 } from "react-native";
 import { supabase } from "../supabaseClient";
-import { useAuth } from "../AuthContext"; // Ensure this path is correct
+import { useAuth } from "../AuthContext"; 
 import Icon from "react-native-vector-icons/Ionicons";
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Menu({ navigation }) {
-  const { user, logout } = useAuth(); // Use the user and logout function from context
+  const { user, logout } = useAuth();
   const [menuItems, setMenuItems] = useState([]);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [itemCounts, setItemCounts] = useState({});
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset item counts when navigating to this screen
+      setItemCounts({});
+    }, [])
+  );
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -33,9 +41,9 @@ export default function Menu({ navigation }) {
 
   const handleLogout = async () => {
     try {
-      logout(); // Call the logout function from context
+      logout(); 
       Alert.alert("Logged out successfully");
-      navigation.navigate("SignIn"); // Navigate to login screen
+      navigation.navigate("SignIn"); 
     } catch (error) {
       console.error("Error during logout:", error);
       Alert.alert("Logout error", "An error occurred while trying to log out.");
@@ -105,8 +113,8 @@ export default function Menu({ navigation }) {
   };
 
   const renderItem = ({ item }) => {
-    const isSoldOut = item.quantity === 0; // Check if the item is sold out
-  
+    const isSoldOut = item.quantity === 0; 
+
     return (
       <View style={[styles.cardContainer, isSoldOut && styles.soldOut]}>
         <Image source={{ uri: item.image }} style={styles.image} />
@@ -204,11 +212,10 @@ export default function Menu({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Mini Dropdown for Menu Options */}
       {dropdownVisible && (
         <View style={styles.dropdownMenu}>
           <TouchableOpacity style={styles.dropdownItem} onPress={handleOrders}>
-            <Text style={styles.dropdownItemText}>Go to Orders</Text>
+            <Text style={styles.dropdownItemText}>My Orders</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
             <Text style={[styles.dropdownItemText, styles.logoutText]}>

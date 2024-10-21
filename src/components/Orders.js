@@ -5,7 +5,7 @@ import { useAuth } from '../AuthContext';
 
 const Orders = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
-  const [selectedStatus, setSelectedStatus] = useState('Pending'); // State for selected status
+  const [selectedStatus, setSelectedStatus] = useState('Pending');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -13,18 +13,18 @@ const Orders = ({ navigation }) => {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('user_id', user.phone); // Fetch orders for the logged-in user
+        .eq('user_id', user.phone)
+        .order('created_at', { ascending: false }); // Order by created_at descending
 
       if (error) {
         console.error('Error fetching orders:', error);
       } else {
-        // Parse the items JSON string into an array
         try {
           const parsedOrders = data.map(order => ({
             ...order,
-            items: JSON.parse(order.items || '[]'), // Ensure it's a valid JSON string
+            items: JSON.parse(order.items || '[]'),
           }));
-          console.log('Parsed Orders:', parsedOrders); // Log the parsed orders
+          console.log('Parsed Orders:', parsedOrders);
           setOrders(parsedOrders);
         } catch (parseError) {
           console.error('Error parsing items:', parseError);
@@ -32,21 +32,19 @@ const Orders = ({ navigation }) => {
       }
     };
 
-    if (user) { // Only fetch if user is available
+    if (user) {
       fetchOrders();
     }
   }, [user]);
 
   const handleGoToMenu = () => {
-    navigation.navigate('Menu');
+    navigation.navigate('Menu', { resetSelections: true });
   };
 
-  // Function to filter orders based on selected status
   const filteredOrders = orders.filter(order => order.status === selectedStatus);
 
   return (
     <View style={styles.container}>
-      {/* Toggle Buttons for Order Status */}
       <View style={styles.toggleContainer}>
         <TouchableOpacity
           style={[styles.toggleButton, selectedStatus === 'Pending' && styles.activeToggle]}
@@ -87,10 +85,13 @@ const Orders = ({ navigation }) => {
                     {item.status}
                   </Text>
                 </View>
+                <Text style={styles.timestampText}>
+                  Order placed on: {new Date(item.created_at).toLocaleString()} {/* Format the timestamp */}
+                </Text>
               </View>
             </View>
           )}
-          keyExtractor={(item) => item.order_id ? item.order_id.toString() : Math.random().toString()} // Use order_id for key
+          keyExtractor={(item) => item.order_id ? item.order_id.toString() : Math.random().toString()}
         />
       )}
       <TouchableOpacity style={styles.menuButton} onPress={handleGoToMenu}>
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   activeText: {
-    color: '#fff', // Change text color to white when active
+    color: '#fff',
   },
   emptyMessage: {
     fontSize: 18,
@@ -204,6 +205,12 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "center",
     fontSize: 18,
+  },
+  timestampText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: 'right', // Align timestamp to the right
+    marginTop: 5, // Add some space above the timestamp
   },
 });
 

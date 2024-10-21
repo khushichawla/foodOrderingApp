@@ -1,10 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Pressable } from 'react-native';
-import { Input, Button } from '@rneui/themed';
-import { supabase } from '../supabaseClient';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../AuthContext';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
+import { Input, Button } from "@rneui/themed";
+import { supabase } from "../supabaseClient";
+import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../AuthContext";
+import { useNavigation } from "@react-navigation/native";
 
 export default function AdminDashboard() {
   const { user, logout: contextLogout } = useAuth(); // Get user from auth context
@@ -18,9 +28,9 @@ export default function AdminDashboard() {
   }, []);
 
   async function fetchMenuItems() {
-    const { data, error } = await supabase.from('menu_items').select('*');
+    const { data, error } = await supabase.from("menu_items").select("*");
     if (error) {
-      console.error('Error fetching menu items:', error);
+      console.error("Error fetching menu items:", error);
     } else {
       setMenuItems(data);
     }
@@ -34,17 +44,19 @@ export default function AdminDashboard() {
   }
 
   async function saveChanges() {
-    const updatedItems = Object.entries(updatedQuantities).map(([itemId, newQuantity]) => ({
-      id: itemId,
-      quantity: newQuantity,
-    }));
+    const updatedItems = Object.entries(updatedQuantities).map(
+      ([itemId, newQuantity]) => ({
+        id: itemId,
+        quantity: newQuantity,
+      })
+    );
 
     for (const { id, quantity } of updatedItems) {
       try {
         const { error } = await supabase
-          .from('menu_items')
+          .from("menu_items")
           .update({ quantity })
-          .eq('id', id);
+          .eq("id", id);
 
         if (error) {
           console.error(`Error updating menu item ${id}:`, error);
@@ -56,11 +68,12 @@ export default function AdminDashboard() {
 
     await fetchMenuItems();
     setUpdatedQuantities({});
+    Alert.alert("Success", "Changes saved successfully!");
   }
 
   const handleLogout = async () => {
     await contextLogout(); // Call logout function from context
-    navigation.navigate('SignIn'); // Navigate to SignIn page
+    navigation.navigate("SignIn"); // Navigate to SignIn page
   };
 
   // Group items by category
@@ -71,189 +84,239 @@ export default function AdminDashboard() {
   }, {});
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.greeting}>Hello, {user?.username || 'Guest'}</Text>
-        <TouchableOpacity onPress={() => setDropdownVisible(!dropdownVisible)} style={styles.hamburger}>
-          <Ionicons name="menu" size={30} color="#287618" />
-        </TouchableOpacity>
-      </View>
-
-      {dropdownVisible && <View style={styles.overlay} onTouchEnd={() => setDropdownVisible(false)} />}
-      
-      {dropdownVisible && (
-        <View style={styles.dropdown}>
-          <Pressable onPress={() => console.log('Add Item')}>
-            <Text style={styles.dropdownItem}>Add Item</Text>
-          </Pressable>
-          <Pressable onPress={() => console.log('Customers')}>
-            <Text style={styles.dropdownItem}>Customers</Text>
-          </Pressable>
-          <Pressable onPress={() => console.log('Orders')}>
-            <Text style={styles.dropdownItem}>Orders</Text>
-          </Pressable>
-          <Pressable onPress={handleLogout}>
-            <Text style={styles.dropdownItem}>Logout</Text>
-          </Pressable>
-          <Pressable onPress={() => setDropdownVisible(false)}>
-            <Text style={[styles.dropdownItem, styles.closeButton]}>Close</Text>
-          </Pressable>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.greeting}>
+            Hello, {user?.username || "Guest"}
+          </Text>
+          <TouchableOpacity
+            onPress={() => setDropdownVisible(!dropdownVisible)}
+            style={styles.hamburger}
+          >
+            <Ionicons name="menu" size={30} color="#287618" />
+          </TouchableOpacity>
         </View>
-      )}
 
-      <ScrollView style={styles.scrollView}>
-        {Object.entries(groupedMenuItems).map(([category, items]) => (
-          <View key={category} style={styles.categoryContainer}>
-            <Text style={styles.categoryHeader}>{category}:</Text>
-            <View style={styles.headerContainer}>
-              <View style={styles.column}>
-                <Text style={styles.headerText}>Name</Text>
-              </View>
-              <View style={styles.column}>
-                <Text style={styles.headerText}>Price</Text>
-              </View>
-              <View style={styles.column}>
-                <Text style={styles.headerTextQuantity}>Quantity</Text>
-              </View>
-            </View>
-            {items.map((item) => (
-              <View key={item.id} style={styles.itemContainer}>
-                <View style={styles.column}>
-                  <Text style={styles.itemTextLeft}>{item.name}</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.itemTextLeft}>${item.price.toFixed(2)}</Text>
-                </View>
-                <View style={styles.column}>
-                  <Input
-                    value={updatedQuantities[item.id]?.toString() || item.quantity.toString()}
-                    onChangeText={(text) => updateMenuItemQuantity(item.id, parseInt(text, 10))}
-                    keyboardType="numeric"
-                    style={styles.quantityInput}
-                  />
-                </View>
-              </View>
-            ))}
+        {dropdownVisible && (
+          <View
+            style={styles.overlay}
+            onTouchEnd={() => setDropdownVisible(false)}
+          />
+        )}
+
+        {dropdownVisible && (
+          <View style={styles.dropdown}>
+            <Pressable onPress={() => console.log("Add Item")}>
+              <Text style={styles.dropdownItem}>Add Item</Text>
+            </Pressable>
+            <Pressable onPress={() => console.log("Customers")}>
+              <Text style={styles.dropdownItem}>Customers</Text>
+            </Pressable>
+            <Pressable onPress={() => console.log("Orders")}>
+              <Text style={styles.dropdownItem}>Orders</Text>
+            </Pressable>
+            <Pressable onPress={handleLogout}>
+              <Text style={styles.dropdownItem}>Logout</Text>
+            </Pressable>
+            <Pressable onPress={() => setDropdownVisible(false)}>
+              <Text style={[styles.dropdownItem, styles.closeButton]}>
+                Close
+              </Text>
+            </Pressable>
           </View>
-        ))}
-        <Button title="Save Changes" onPress={saveChanges} buttonStyle={styles.saveButton} />
-      </ScrollView>
-    </View>
+        )}
+
+        <ScrollView style={styles.scrollView}>
+          {Object.entries(groupedMenuItems).map(([category, items]) => (
+            <View key={category} style={styles.categoryContainer}>
+              <Text style={styles.categoryHeader}>{category}:</Text>
+              <View style={styles.headerContainer}>
+                <View style={styles.column}>
+                  <Text style={styles.headerText}>Name</Text>
+                </View>
+                <View style={styles.column}>
+                  <Text style={styles.headerText}>Price</Text>
+                </View>
+                <View style={styles.column}>
+                  <Text style={styles.headerTextQuantity}>Quantity</Text>
+                </View>
+              </View>
+              {items.map((item) => (
+                <View key={item.id} style={styles.itemContainer}>
+                  <View style={styles.column}>
+                    <Text style={styles.itemTextLeft}>{item.name}</Text>
+                  </View>
+                  <View style={styles.column}>
+                    <Text style={styles.itemTextLeft}>
+                      ${item.price.toFixed(2)}
+                    </Text>
+                  </View>
+                  <View style={styles.column}>
+                    <Input
+                      value={
+                        updatedQuantities[item.id]?.toString() ||
+                        item.quantity.toString()
+                      }
+                      onChangeText={(text) => {
+                        // Allow -1, any integer value, or empty string
+                        if (
+                          text === "" ||
+                          text === "-1" ||
+                          /^[+-]?\d*$/.test(text)
+                        ) {
+                          // Update local value without affecting the global state
+                          setUpdatedQuantities((prev) => ({
+                            ...prev,
+                            [item.id]: text,
+                          }));
+                        }
+                      }}
+                      keyboardType="default"
+                      containerStyle={{ width: 90 }} // Set the container width here
+                      inputStyle={{
+                        // height: 10,
+                        fontSize: 16,
+                        textAlign: "center",
+                        borderWidth: 1,
+                        borderColor: "#ccc",
+                        borderRadius: 4,
+                      }} // Set the height and font size here
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
+          ))}
+          <Button
+            title="Save Changes"
+            onPress={saveChanges}
+            buttonStyle={styles.saveButton}
+          />
+        </ScrollView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 16,
-    backgroundColor: '#f8f8f8', // Header background color
-    elevation: 5, // Add shadow for better visibility
+    backgroundColor: "#f8f8f8",
+    elevation: 5,
     marginTop: 30,
   },
   greeting: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#287618',
+    fontWeight: "bold",
+    color: "#287618",
   },
   hamburger: {
     padding: 8,
-    backgroundColor: 'white', // Solid white background for the hamburger
-    borderRadius: 50, // Circular button
-    elevation: 3, // Slight elevation to make it pop
+    backgroundColor: "white",
+    borderRadius: 50,
+    elevation: 3,
   },
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
-    zIndex: 5, // Ensure it's above other components
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    zIndex: 5,
   },
   dropdown: {
-    position: 'absolute',
+    position: "absolute",
     right: 16,
     top: 60,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 10, // Increased elevation to bring it to the front
-    zIndex: 10, // Higher zIndex to ensure it stays on top
-    width: 150, // Set a width for the dropdown
+    elevation: 10,
+    zIndex: 10,
+    width: 150,
   },
   dropdownItem: {
     padding: 10,
     fontSize: 16,
-    color: '#287618',
+    color: "#287618",
   },
   closeButton: {
-    color: 'red', // Red color for the close button
+    color: "red",
   },
   scrollView: {
     padding: 16,
   },
   categoryContainer: {
-    marginBottom: 16,
+    marginBottom: 8, // Reduced margin
   },
   categoryHeader: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#287618',
-    textDecorationLine: 'underline',
+    fontWeight: "bold",
+    marginBottom: 4, // Reduced margin
+    color: "#287618",
+    textDecorationLine: "underline",
+    paddingLeft: 10,
   },
   headerContainer: {
-    flexDirection: 'row',
-    marginBottom: 8,
-    paddingVertical: 8,
+    flexDirection: "row",
+    marginBottom: 4, // Reduced margin
+    paddingVertical: 4, // Reduced padding
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: "#ccc",
   },
   column: {
     flex: 1,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
+    paddingLeft: 10,
   },
   headerText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
   },
   headerTextQuantity: {
     fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginLeft: 20,
   },
   itemContainer: {
-    flexDirection: 'row',
-    marginVertical: 4,
-    paddingVertical: 8,
+    flexDirection: "row",
+    marginVertical: 2, // Reduced margin
+    paddingVertical: 4, // Reduced padding
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   itemTextLeft: {
     fontSize: 16,
-    textAlign: 'left',
-    width: '100%',
+    textAlign: "left",
+    width: "100%",
   },
   quantityInput: {
-    width: 60,
-    height: 40,
-    textAlign: 'center',
+    width: 40,
+    height: 20, // Reduced height
+    textAlign: "center",
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 4,
+    flexShrink: 0,
   },
   saveButton: {
-    backgroundColor: '#287618',
+    backgroundColor: "#287618",
     marginTop: 16,
     marginBottom: 50,
   },
