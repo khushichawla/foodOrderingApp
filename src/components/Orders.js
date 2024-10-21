@@ -5,7 +5,7 @@ import { useAuth } from '../AuthContext';
 
 const Orders = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
-  const [selectedStatus, setSelectedStatus] = useState('Pending');
+  const [selectedStatuses, setSelectedStatuses] = useState(['Pending']); // Default to Pending
   const { user } = useAuth();
 
   useEffect(() => {
@@ -14,7 +14,7 @@ const Orders = ({ navigation }) => {
         .from('orders')
         .select('*')
         .eq('user_id', user.phone)
-        .order('created_at', { ascending: false }); // Order by created_at descending
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching orders:', error);
@@ -24,7 +24,6 @@ const Orders = ({ navigation }) => {
             ...order,
             items: JSON.parse(order.items || '[]'),
           }));
-          console.log('Parsed Orders:', parsedOrders);
           setOrders(parsedOrders);
         } catch (parseError) {
           console.error('Error parsing items:', parseError);
@@ -41,27 +40,45 @@ const Orders = ({ navigation }) => {
     navigation.navigate('Menu', { resetSelections: true });
   };
 
-  const filteredOrders = orders.filter(order => order.status === selectedStatus);
+  const toggleStatus = (status) => {
+    setSelectedStatuses((prev) => {
+      if (prev.includes(status)) {
+        return prev.filter(item => item !== status);
+      } else {
+        return [...prev, status];
+      }
+    });
+  };
+
+  const isSelected = (status) => selectedStatuses.includes(status);
+
+  const filteredOrders = orders.filter(order => selectedStatuses.includes(order.status));
 
   return (
     <View style={styles.container}>
       <View style={styles.toggleContainer}>
         <TouchableOpacity
-          style={[styles.toggleButton, selectedStatus === 'Pending' && styles.activeToggle]}
-          onPress={() => setSelectedStatus('Pending')}
+          style={[styles.toggleButton, isSelected('Pending') && styles.activeToggle]}
+          onPress={() => toggleStatus('Pending')}
         >
-          <Text style={[styles.toggleButtonText, selectedStatus === 'Pending' && styles.activeText]}>Pending</Text>
+          <Text style={[styles.toggleButtonText, isSelected('Pending') && styles.activeText]}>Pending</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.toggleButton, selectedStatus === 'Success' && styles.activeToggle]}
-          onPress={() => setSelectedStatus('Success')}
+          style={[styles.toggleButton, isSelected('Success') && styles.activeToggle]}
+          onPress={() => toggleStatus('Success')}
         >
-          <Text style={[styles.toggleButtonText, selectedStatus === 'Success' && styles.activeText]}>Successful</Text>
+          <Text style={[styles.toggleButtonText, isSelected('Success') && styles.activeText]}>Successful</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toggleButton, isSelected('Cancelled') && styles.activeToggle]}
+          onPress={() => toggleStatus('Cancelled')}
+        >
+          <Text style={[styles.toggleButtonText, isSelected('Cancelled') && styles.activeText]}>Cancelled</Text>
         </TouchableOpacity>
       </View>
 
       {filteredOrders.length === 0 ? (
-        <Text style={styles.emptyMessage}>You have no {selectedStatus} orders!</Text>
+        <Text style={styles.emptyMessage}>You have no selected orders!</Text>
       ) : (
         <FlatList
           data={filteredOrders}
@@ -81,12 +98,15 @@ const Orders = ({ navigation }) => {
                 <Text style={styles.totalText}>Total Paid: ${item.total_amount.toFixed(2)}</Text>
                 <View style={styles.statusContainer}>
                   <Text style={styles.statusLabel}>Status: </Text>
-                  <Text style={[styles.statusText, item.status === 'Pending' ? styles.statusPending : styles.statusSuccess]}>
+                  <Text style={[styles.statusText, 
+                    item.status === 'Pending' ? styles.statusPending : 
+                    item.status === 'Success' ? styles.statusSuccess : 
+                    styles.statusCancelled]}>
                     {item.status}
                   </Text>
                 </View>
                 <Text style={styles.timestampText}>
-                  Order placed on: {new Date(item.created_at).toLocaleString()} {/* Format the timestamp */}
+                  Order placed on: {new Date(item.created_at).toLocaleString()}
                 </Text>
               </View>
             </View>
@@ -113,12 +133,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   toggleButton: {
-    padding: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     borderWidth: 1,
     borderColor: '#287618',
-    borderRadius: 5,
+    borderRadius: 25, // Increased borderRadius for an elliptical shape
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center', // Center content vertically and horizontally
+    marginHorizontal: 5, // Add horizontal margin for spacing
   },
   activeToggle: {
     backgroundColor: '#287618',
@@ -126,6 +149,7 @@ const styles = StyleSheet.create({
   toggleButtonText: {
     color: '#287618',
     fontWeight: 'bold',
+    fontSize: 14, // Decreased font size
   },
   activeText: {
     color: '#fff',
@@ -194,6 +218,9 @@ const styles = StyleSheet.create({
   statusSuccess: {
     color: "green",
   },
+  statusCancelled: {
+    color: "red",
+  },
   menuButton: {
     backgroundColor: "#287618",
     paddingVertical: 10,
@@ -209,8 +236,8 @@ const styles = StyleSheet.create({
   timestampText: {
     fontSize: 14,
     color: "#666",
-    textAlign: 'right', // Align timestamp to the right
-    marginTop: 5, // Add some space above the timestamp
+    textAlign: 'right',
+    marginTop: 5,
   },
 });
 

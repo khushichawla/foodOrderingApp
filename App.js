@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useState, useEffect } from "react";
 import { supabase } from "./src/supabaseClient";
 import { AuthProvider } from "./src/AuthContext";
+import { CartProvider } from './src/CartContext';
 import SignIn from "./src/components/SignIn";
 import SignUp from "./src/components/SignUp";
 import Menu from "./src/components/Menu";
@@ -44,6 +45,7 @@ export default function App() {
 
   return (
     <AuthProvider>
+       <CartProvider>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="SignIn">
           <Stack.Screen
@@ -85,6 +87,7 @@ export default function App() {
           />
         </Stack.Navigator>
       </NavigationContainer>
+      </CartProvider>
     </AuthProvider>
   );
 }

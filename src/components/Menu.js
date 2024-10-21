@@ -6,25 +6,30 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
+  Pressable,
   Alert,
 } from "react-native";
 import { supabase } from "../supabaseClient";
-import { useAuth } from "../AuthContext"; 
+import { useAuth } from "../AuthContext";
+import { useCart } from '../CartContext';
 import Icon from "react-native-vector-icons/Ionicons";
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from "@react-navigation/native";
 
-export default function Menu({ navigation }) {
+export default function Menu({ navigation, route }) {
   const { user, logout } = useAuth();
   const [menuItems, setMenuItems] = useState([]);
   const [expandedCategories, setExpandedCategories] = useState({});
-  const [itemCounts, setItemCounts] = useState({});
+  // const [itemCounts, setItemCounts] = useState({});
+  const { itemCounts, setItemCounts } = useCart();
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  
+
   useFocusEffect(
     React.useCallback(() => {
-      // Reset item counts when navigating to this screen
-      setItemCounts({});
-    }, [])
+      // Check if resetSelections parameter is passed
+      if (route.params?.resetSelections) {
+        setItemCounts({}); // Reset item counts
+      }
+    }, [route.params])
   );
 
   useEffect(() => {
@@ -39,11 +44,12 @@ export default function Menu({ navigation }) {
     fetchMenuItems();
   }, []);
 
+
   const handleLogout = async () => {
     try {
-      logout(); 
+      logout();
       Alert.alert("Logged out successfully");
-      navigation.navigate("SignIn"); 
+      navigation.navigate("SignIn");
     } catch (error) {
       console.error("Error during logout:", error);
       Alert.alert("Logout error", "An error occurred while trying to log out.");
@@ -105,7 +111,12 @@ export default function Menu({ navigation }) {
   };
 
   const handleCheckout = () => {
-    navigation.navigate("Checkout", { itemCounts, menuItems });
+    const totalCount = getTotalCount();
+    if (totalCount === 0) {
+      Alert.alert("No items selected", "Add items to your cart");
+    } else {
+      navigation.navigate("Checkout", { itemCounts, menuItems });
+    }
   };
 
   const handleOrders = () => {
@@ -113,25 +124,33 @@ export default function Menu({ navigation }) {
   };
 
   const renderItem = ({ item }) => {
-    const isSoldOut = item.quantity === 0; 
+    const isSoldOut = item.quantity === 0;
 
     return (
       <View style={[styles.cardContainer, isSoldOut && styles.soldOut]}>
         <Image source={{ uri: item.image }} style={styles.image} />
         {isSoldOut && <View style={styles.overlay} />}
         <View style={styles.infoContainer}>
-          <Text style={[styles.itemName, isSoldOut && styles.soldOutText]}>{item.name}</Text>
+          <Text style={[styles.itemName, isSoldOut && styles.soldOutText]}>
+            {item.name}
+          </Text>
           <Text style={[styles.itemPrice, isSoldOut && styles.soldOutText]}>
             {isSoldOut ? "Sold Out" : `$${item.price.toFixed(2)}`}
           </Text>
         </View>
         {!isSoldOut && (
           <View style={styles.counterContainer}>
-            <TouchableOpacity onPress={() => handleDecrement(item.id)} style={styles.counterButton}>
+            <TouchableOpacity
+              onPress={() => handleDecrement(item.id)}
+              style={styles.counterButton}
+            >
               <Text style={styles.counterButtonText}>-</Text>
             </TouchableOpacity>
             <Text style={styles.counterText}>{itemCounts[item.id] || 0}</Text>
-            <TouchableOpacity onPress={() => handleIncrement(item.id)} style={styles.counterButton}>
+            <TouchableOpacity
+              onPress={() => handleIncrement(item.id)}
+              style={styles.counterButton}
+            >
               <Text style={styles.counterButtonText}>+</Text>
             </TouchableOpacity>
           </View>
@@ -273,14 +292,14 @@ const styles = StyleSheet.create({
     top: 50,
     right: 10,
     backgroundColor: "white",
-    borderRadius: 5,
+    borderRadius: 10,
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
     padding: 10,
-    width: 150,
+    width: 120,
     zIndex: 1000,
   },
   dropdownItem: {
@@ -341,19 +360,18 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   soldOut: {
-    backgroundColor: '#f0f0f0', // Light grey background for sold out items
+    backgroundColor: "#f0f0f0", // Light grey background for sold out items
   },
   soldOutText: {
-    color: '#888', // Grey text color for sold out items
-    // textDecorationLine: 'line-through', // Strikethrough for sold out items
+    color: "#888", // Grey text color for sold out items
   },
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)', // Dark overlay with 50% opacity
+    backgroundColor: "rgba(0, 0, 0, 0.05)", // Dark overlay with 50% opacity
     borderRadius: 8, // Match border radius of the card
   },
   counterContainer: {
