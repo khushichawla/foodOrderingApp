@@ -12,8 +12,8 @@ import SignUp from "./src/components/SignUp";
 import Menu from "./src/components/Menu";
 import Checkout from "./src/components/Checkout";
 import Orders from "./src/components/Orders";
-import AdminDashboard from "./src/components/AdminDashboard";
 import AdminMenu from "./src/components/AdminMenu";
+import AddItem from "./src/components/AddItem";
 import PendingOrders from "./src/components/PendingOrders";
 import { TouchableOpacity, Text } from "react-native";
 
@@ -83,19 +83,12 @@ export default function App() {
               }}
             />
             <Stack.Screen
-              name="AdminDashboard"
-              component={AdminDashboard}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
               name="AdminMenu"
               component={AdminMenu}
-              options={{
-                title: "Menu",
-                headerBackTitle: "Dashboard",
-              }}
+              options={{ headerShown: false }}
               // options={{ headerShown: false }}
             />
+      <Stack.Screen name="AddItem" component={AddItem} />
             <Stack.Screen
               name="PendingOrders"
               component={PendingOrders}

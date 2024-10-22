@@ -70,7 +70,7 @@ export default function SignIn() {
         username: profile.username,
       });
   
-      navigation.navigate("AdminDashboard"); // Redirect to the admin dashboard
+      navigation.navigate("AdminMenu"); // Redirect to the admin dashboard
     }
   
     setLoading(false);
