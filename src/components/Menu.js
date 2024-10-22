@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../AuthContext";
-import { useCart } from '../CartContext';
+import { useCart } from "../CartContext";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -24,33 +24,47 @@ export default function Menu({ navigation, route }) {
 
   // Fetch menu items when the screen is focused
   useFocusEffect(
-    React.useCallback(() => {
-      const fetchMenuItems = async () => {
+  React.useCallback(() => {
+    const fetchMenuItems = async () => {
+      try {
         const { data, error } = await supabase
           .from("menu_items")
           .select("*")
           .eq("status", "enable"); // Filter for items with status 'enable'
-  
+
         if (error) {
-          console.error("Error fetching menu items:", error);
-        } else {
-          setMenuItems(data);
+          throw error; // Throw error for better catch handling
         }
-      };
 
-      fetchMenuItems();
+        if (data) {
+          setMenuItems(data);
 
-      // Check if resetSelections parameter is passed
-      if (route.params?.resetSelections) {
-        setItemCounts({}); // Reset item counts
+          // Initialize item counts to zero for the fetched items
+          const initialCounts = {};
+          data.forEach(item => {
+            initialCounts[item.id] = 0; // Set each item's count to 0
+          });
+          setItemCounts(initialCounts); // Update item counts state
+        }
+      } catch (error) {
+        console.error("Error fetching menu items:", error);
+        Alert.alert("Error", "Could not fetch menu items. Please try again.");
       }
-    }, [route.params])
-  );
+    };
+
+    fetchMenuItems();
+
+    // Check if resetSelections parameter is passed
+    if (route.params?.resetSelections) {
+      setItemCounts({}); // Reset item counts
+    }
+  }, [route.params])
+);
 
   const handleLogout = async () => {
     try {
       logout();
-      Alert.alert("Logged out successfully");
+      // Alert.alert("Logged out successfully");
       navigation.navigate("SignIn");
     } catch (error) {
       console.error("Error during logout:", error);
@@ -127,7 +141,8 @@ export default function Menu({ navigation, route }) {
 
   const renderItem = ({ item }) => {
     const isSoldOut = item.quantity === 0;
-
+    const itemCount = itemCounts[item.id] || 0; // Get the current count
+  
     return (
       <View style={[styles.cardContainer, isSoldOut && styles.soldOut]}>
         <Image source={{ uri: item.image }} style={styles.image} />
@@ -142,19 +157,30 @@ export default function Menu({ navigation, route }) {
         </View>
         {!isSoldOut && (
           <View style={styles.counterContainer}>
-            <TouchableOpacity
-              onPress={() => handleDecrement(item.id)}
-              style={styles.counterButton}
-            >
-              <Text style={styles.counterButtonText}>-</Text>
-            </TouchableOpacity>
-            <Text style={styles.counterText}>{itemCounts[item.id] || 0}</Text>
-            <TouchableOpacity
-              onPress={() => handleIncrement(item.id)}
-              style={styles.counterButton}
-            >
-              <Text style={styles.counterButtonText}>+</Text>
-            </TouchableOpacity>
+            {itemCount === 0 ? (
+              <TouchableOpacity
+                onPress={() => handleIncrement(item.id)}
+                style={styles.iconButton}
+              >
+                <Icon name="add-circle" size={34} color="#287618" />
+              </TouchableOpacity>
+            ) : (
+              <>
+                <TouchableOpacity
+                  onPress={() => handleDecrement(item.id)}
+                  style={styles.counterButton}
+                >
+                  <Text style={styles.counterButtonText}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.counterText}>{itemCount}</Text>
+                <TouchableOpacity
+                  onPress={() => handleIncrement(item.id)}
+                  style={styles.counterButton}
+                >
+                  <Text style={styles.counterButtonText}>+</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         )}
       </View>
@@ -175,21 +201,32 @@ export default function Menu({ navigation, route }) {
                 </Text>
               </View>
               <View style={styles.counterContainer}>
-                <TouchableOpacity
-                  onPress={() => handleDecrement(menuItem.id)}
-                  style={styles.counterButton}
-                >
-                  <Text style={styles.counterButtonText}>-</Text>
-                </TouchableOpacity>
-                <Text style={styles.counterText}>
-                  {itemCounts[menuItem.id] || 0}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => handleIncrement(menuItem.id)}
-                  style={styles.counterButton}
-                >
-                  <Text style={styles.counterButtonText}>+</Text>
-                </TouchableOpacity>
+                {itemCounts[menuItem.id] === 0 ? (
+                  <TouchableOpacity
+                    onPress={() => handleIncrement(menuItem.id)} // Use menuItem.id
+                    style={styles.iconButton}
+                  >
+                    <Icon name="add-circle" size={34} color="#287618" />
+                  </TouchableOpacity>
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      onPress={() => handleDecrement(menuItem.id)}
+                      style={styles.counterButton}
+                    >
+                      <Text style={styles.counterButtonText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.counterText}>
+                      {itemCounts[menuItem.id]}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => handleIncrement(menuItem.id)}
+                      style={styles.counterButton}
+                    >
+                      <Text style={styles.counterButtonText}>+</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
             </View>
           ))}
@@ -360,6 +397,11 @@ const styles = StyleSheet.create({
   itemPrice: {
     fontSize: 18,
     color: "#333",
+  },
+  iconButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingRight: 10,
   },
   soldOut: {
     backgroundColor: "#f0f0f0",

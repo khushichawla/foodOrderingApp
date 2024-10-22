@@ -19,6 +19,10 @@ const Checkout = ({ route, navigation }) => {
     return items.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2);
   };
 
+  const getTotalItemCount = () => {
+    return items.reduce((total, item) => total + item.quantity, 0);
+  };
+
   useEffect(() => {
     // Validate quantities against available stock
     const validateQuantities = async () => {
@@ -144,7 +148,7 @@ const Checkout = ({ route, navigation }) => {
         "Some items could not be updated. Please check your order."
       );
     } else {
-      Alert.alert("Success", "Your order has been placed!");
+      // Alert.alert("Success", "Your order has been placed!");
       navigation.navigate("Orders", { orders: orderData });
     }
   };
@@ -154,44 +158,50 @@ const Checkout = ({ route, navigation }) => {
       {items.length === 0 ? (
         <Text style={styles.emptyMessage}>Your cart is empty!</Text>
       ) : (
-        <FlatList
-          data={items}
-          renderItem={({ item }) => (
-            <View style={styles.cardContainer}>
-              <Image source={{ uri: item.image }} style={styles.image} />
-              <View style={styles.infoContainer}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemQuantity}>
-                  Quantity: {itemCounts[item.id]}
-                </Text>
-                {itemErrors[item.id] && (
-                  <View style={styles.errorContainer}>
-                    <Text style={styles.errorIcon}>⚠️</Text>
-                    <Text style={styles.errorText}>
-                      Insufficient stock for {item.name}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          )}
-          keyExtractor={(item) => item.id.toString()}
-        />
-      )}
-      {items.length > 0 && (
-        <View style={styles.paymentContainer}>
-          <Text style={styles.totalAmount}>
-            Total Amount: ${getTotalPrice()}
+        <View>
+          <Text style={styles.totalItemCount}>
+            Total Items: {getTotalItemCount()}
           </Text>
-          <TouchableOpacity
-            style={[styles.paymentButton, hasError && styles.disabledButton]}
-            onPress={handlePayment}
-            disabled={hasError}
-          >
-            <Text style={styles.paymentButtonText}>Pay Now</Text>
-          </TouchableOpacity>
+          <FlatList
+            data={items}
+            renderItem={({ item }) => (
+              <View style={styles.cardContainer}>
+                <Image source={{ uri: item.image }} style={styles.image} />
+                <View style={styles.infoContainer}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  <Text style={styles.itemPrice}>
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </Text>
+                  <Text style={styles.itemQuantity}>
+                    Quantity: {itemCounts[item.id]}
+                  </Text>
+                  {itemErrors[item.id] && (
+                    <View style={styles.errorContainer}>
+                      <Text style={styles.errorIcon}>⚠️</Text>
+                      <Text style={styles.errorText}>
+                        Insufficient stock for {item.name}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
+            keyExtractor={(item) => item.id.toString()}
+          />
         </View>
       )}
+      <View style={styles.paymentContainer}>
+        <Text style={styles.totalAmount}>
+          Total Amount: ${getTotalPrice()}
+        </Text>
+        <TouchableOpacity
+          style={[styles.paymentButton, hasError && styles.disabledButton]}
+          onPress={handlePayment}
+          disabled={hasError}
+        >
+          <Text style={styles.paymentButtonText}>Place Order</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -200,6 +210,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    justifyContent: 'space-between', // Ensures button is at the bottom
+  },
+  contentContainer: {
+    flex: 1, // Allows the content to take up available space
   },
   emptyMessage: {
     fontSize: 18,
@@ -226,6 +240,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  itemPrice: {
+    fontSize: 16,
+    color: '#333',
+  },
   itemQuantity: {
     fontSize: 16,
     color: '#333',
@@ -243,6 +261,11 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 14,
     color: 'red',
+  },
+  totalItemCount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
   paymentContainer: {
     marginTop: 20,
