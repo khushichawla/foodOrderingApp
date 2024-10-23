@@ -208,7 +208,8 @@ const AdminOrders = ({ navigation }) => {
                   onPress={() => openModal(item.order_id, item.status)}
                 >
                   <Text style={[styles.statusButtonText, { color: "white" }]}>
-                    {currentStatus || "Change Status"}
+                    {/* {currentStatus || "Change Status"} */}
+                    Change Status
                   </Text>
                 </TouchableOpacity>
               </View>

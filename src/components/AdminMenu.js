@@ -116,7 +116,7 @@ const AdminMenu = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleSideNav} style={styles.hamburger}>
-          <Ionicons name="menu" size={30} color="#287618" />
+          <Ionicons name="menu" size={30} color="#007bff" />
         </TouchableOpacity>
         <Text style={styles.greeting}>Hello, {user?.username || "User"}</Text>
       </View>
@@ -218,7 +218,7 @@ const AdminMenu = () => {
                 style={styles.input}
                 value={quantity}
                 onChangeText={setQuantity}
-                keyboardType="numeric"
+                keyboardType="numbers-and-punctuation"
               />
               <Text>Status:</Text>
               <TouchableOpacity
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#287618",
+    color: "#007bff",
     marginLeft: 16,
   },
   hamburger: {
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   dropdownItem: {
     padding: 12,
     fontSize: 20,
-    color: "#287618",
+    color: "#007bff",
     fontWeight: "bold",
     textAlign: "left",
   },
