@@ -171,7 +171,11 @@ const AddItem = ({ navigation }) => {
         keyExtractor={(item, index) => index.toString()}
         contentContainerStyle={styles.scrollContainer}
       />
-      <Button title="Save" onPress={handleAddItem} />
+      <View style={styles.saveContainer}>
+      <TouchableOpacity style={styles.saveButton} onPress={handleAddItem}>
+        <Text style={styles.saveButtonText}>Save</Text>
+      </TouchableOpacity>
+    </View>
 
       {/* Modal for Category Selection */}
       <Modal
@@ -303,6 +307,23 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     color: 'white',
+    fontWeight: 'bold',
+  },
+  saveContainer: {
+    alignItems: 'center',
+    marginBottom: 100,
+  },
+  saveButton: {
+    backgroundColor: '#007BFF', // Change to your desired color
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    width: 350,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: 'white',
+    fontSize: 20,
     fontWeight: 'bold',
   },
 });

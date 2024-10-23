@@ -74,7 +74,7 @@ const Orders = ({ navigation }) => {
       Alert.alert('Error', 'Could not delete the order. Please try again.');
     } else {
       setOrders(orders.filter(order => order.order_id !== orderId)); // Update to use order_id
-      Alert.alert('Success', 'Order deleted successfully.');
+      // Alert.alert('Success', 'Order deleted successfully.');
     }
   };
 
