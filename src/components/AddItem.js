@@ -78,23 +78,25 @@ const AddItem = ({ navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={20} // Adjust as needed
     >
-      <Text style={styles.heading}>Add Item</Text>
-      <Text>Name:</Text>
+      <Text style={styles.label}>Name:</Text>
       <TextInput style={styles.input} value={name} onChangeText={setName} />
-      <Text>Price:</Text>
+      
+      <Text style={styles.label}>Price:</Text>
       <TextInput 
         style={styles.input} 
         value={price} 
         onChangeText={setPrice} 
         keyboardType="numeric" 
       />
-      <Text>Image:</Text>
+      
+      <Text style={styles.label}>Image:</Text>
       <TouchableOpacity onPress={handleImagePick} style={styles.uploadButton}>
         <Text style={styles.uploadButtonText}>
           {image ? 'Change Image' : 'Upload Image'}
         </Text>
       </TouchableOpacity>
       {image && <Image source={{ uri: image }} style={styles.imagePreview} />}
+      
       <Text style={styles.label}>Quantity:</Text>
       <TextInput 
         style={styles.input} 
@@ -102,10 +104,11 @@ const AddItem = ({ navigation }) => {
         onChangeText={setQuantity} 
         keyboardType="numeric" 
       />
+      
       <Text style={styles.label}>Category:</Text>
       <TextInput style={styles.input} value={category} onChangeText={setCategory} />
       
-      <Text>Status:</Text>
+      <Text style={styles.label}>Status:</Text>
       <TouchableOpacity
         style={[
           styles.toggleButton,
@@ -129,9 +132,12 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#f8f8f8',
   },
-  heading: {
-    fontSize: 24,
-    marginBottom: 20,
+  label: {
+    fontSize: 16, // Increased font size for labels
+    fontFamily: 'Montserrat', // Apply Roboto font
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginBottom: 5,
   },
   input: {
     borderWidth: 1,
@@ -156,11 +162,6 @@ const styles = StyleSheet.create({
     height: 100,
     marginVertical: 10,
     borderRadius: 5,
-  },
-  label: {
-    marginTop: 10,
-    marginBottom: 5,
-    fontWeight: 'bold',
   },
   toggleButton: {
     padding: 10,

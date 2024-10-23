@@ -15,6 +15,7 @@ import Orders from "./src/components/Orders";
 import AdminMenu from "./src/components/AdminMenu";
 import AddItem from "./src/components/AddItem";
 import AdminOrders from "./src/components/AdminOrders";
+import AdminCustomers from "./src/components/AdminCustomers";
 import PendingOrders from "./src/components/PendingOrders";
 import { TouchableOpacity, Text } from "react-native";
 
@@ -89,8 +90,22 @@ export default function App() {
               options={{ headerShown: false }}
               // options={{ headerShown: false }}
             />
-            <Stack.Screen name="AddItem" component={AddItem} />
-            <Stack.Screen name="AdminOrders" component={AdminOrders} />
+            <Stack.Screen name="AddItem" component={AddItem} options={{
+                title: "Add Item",
+                headerBackTitle: "Back",
+              }}/>
+            <Stack.Screen name="AdminOrders" component={AdminOrders} options={{
+                title: "Orders",
+                headerBackTitle: "Back",
+              }}/>
+            <Stack.Screen
+              name="AdminCustomers"
+              component={AdminCustomers}
+              options={{
+                title: "Customers",
+                headerBackTitle: "Back",
+              }}
+            />
             <Stack.Screen
               name="PendingOrders"
               component={PendingOrders}

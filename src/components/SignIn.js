@@ -45,6 +45,12 @@ export default function SignIn() {
       return;
     }
   
+    if (profile.status === "Blocked") {
+      Alert.alert("Account Blocked", "Your account is blocked.");
+      setLoading(false);
+      return; // Early return to stop further processing
+    }
+    
     // Check user status
     if (profile.status === "Pending") {
       Alert.alert(

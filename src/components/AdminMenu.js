@@ -129,7 +129,7 @@ const AdminMenu = () => {
             <Text style={styles.dropdownItem}>Add Item</Text>
           </Pressable>
           <View style={styles.separator} />
-          <Pressable onPress={() => console.log("Customers")}>
+          <Pressable onPress={() => navigation.navigate("AdminCustomers")}>
             <Text style={styles.dropdownItem}>Customers</Text>
           </Pressable>
           <View style={styles.separator} />
