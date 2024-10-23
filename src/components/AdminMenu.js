@@ -18,6 +18,7 @@ import { supabase } from "../supabaseClient"; // Adjust the import as necessary
 import { Ionicons } from "@expo/vector-icons"; // Make sure to import Ionicons
 import { useAuth } from "../AuthContext"; // Import useAuth for user context
 import { useNavigation } from "@react-navigation/native"; // Import useNavigation for navigation
+import { Picker } from '@react-native-picker/picker';
 
 const AdminMenu = () => {
   const { user, logout: contextLogout } = useAuth(); // Get user information and logout function from AuthContext
@@ -29,6 +30,7 @@ const AdminMenu = () => {
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [status, setStatus] = useState("");
+  const [selectedValue, setSelectedValue] = useState("java");
 
   useEffect(() => {
     fetchMenuItems();
@@ -39,7 +41,7 @@ const AdminMenu = () => {
     if (error) {
       console.error("Error fetching menu items:", error);
     } else {
-      console.log("Fetched menu items:", data);
+      // console.log("Fetched menu items:", data);
       setMenuItems(data);
     }
   };
@@ -131,7 +133,7 @@ const AdminMenu = () => {
             <Text style={styles.dropdownItem}>Customers</Text>
           </Pressable>
           <View style={styles.separator} />
-          <Pressable onPress={() => console.log("Orders")}>
+          <Pressable onPress={() => navigation.navigate("AdminOrders")}>
             <Text style={styles.dropdownItem}>Orders</Text>
           </Pressable>
           <View style={styles.separator} />
